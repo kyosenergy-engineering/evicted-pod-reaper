@@ -1,0 +1,36 @@
+name: Build container images
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-ecr-images:
+    name: 'Build and push ECR images'
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write # required for obtaining the OIDC JWT from GitHub
+
+    steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ECR_ROLE_ARN_FOR_OIDC }}
+        role-session-name: docker-build-in-gh-actions
+        aws-region: eu-central-1
+
+    - name: Login to Amazon ECR Public
+      uses: aws-actions/amazon-ecr-login@v2
+      with:
+        registry-type: public
+
+    - name: Build, tag, and push docker image to Amazon ECR Public
+      uses: docker/bake-action@v6
+      env:
+        REGISTRY: public.ecr.aws
+        TAG: ${{ github.sha }}
+      with:
+        source: .
+        push: true
