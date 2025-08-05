@@ -1,0 +1,38 @@
+# Test values for CI
+# Tests various configurations to ensure chart renders correctly
+
+# Test 1: Basic namespace-scoped deployment
+replicaCount: 1
+reaper:
+  watchAllNamespaces: false
+  watchNamespaces:
+    - test-namespace
+    - another-namespace
+  ttlToDelete: 60
+
+# Test resource limits
+resources:
+  limits:
+    cpu: 100m
+    memory: 64Mi
+  requests:
+    cpu: 50m
+    memory: 32Mi
+
+# Test metrics with PodMonitor
+metrics:
+  enabled: true
+  podMonitor:
+    enabled: true
+    interval: 15s
+
+# Test security features
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Test PDB
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

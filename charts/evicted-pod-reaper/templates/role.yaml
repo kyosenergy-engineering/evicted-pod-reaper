@@ -1,0 +1,70 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ include "evicted-pod-reaper.rbacKind" . }}
+metadata:
+  name: {{ include "evicted-pod-reaper.fullname" . }}
+  {{- if not .Values.reaper.watchAllNamespaces }}
+  namespace: {{ .Release.Namespace }}
+  {{- end }}
+  labels:
+    {{- include "evicted-pod-reaper.labels" . | nindent 4 }}
+  {{- with include "evicted-pod-reaper.annotations" . }}
+  annotations:
+    {{- . | nindent 4 }}
+  {{- end }}
+rules:
+# Core pod management permissions
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - delete
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/status
+  verbs:
+  - get
+# Leader election permissions (if enabled)
+{{- if .Values.controller.leaderElection }}
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+{{- end }}
+# Additional custom rules
+{{- with .Values.rbac.additionalRules }}
+{{- toYaml . | nindent 0 }}
+{{- end }}
+{{- end }}

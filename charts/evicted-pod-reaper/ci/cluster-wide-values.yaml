@@ -1,0 +1,29 @@
+# Test cluster-wide configuration
+reaper:
+  watchAllNamespaces: true
+  ttlToDelete: 120
+
+# Enable leader election for HA
+controller:
+  leaderElection: true
+
+# Test with multiple replicas
+replicaCount: 2
+
+# Test autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+# Test network policy
+networkPolicy:
+  enabled: true
+
+# Test additional RBAC rules
+rbac:
+  additionalRules:
+    - apiGroups: [""]
+      resources: ["events"]
+      verbs: ["create", "patch"]

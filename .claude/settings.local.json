@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(go mod:*)",
+      "Bash(go test:*)",
+      "Bash(go build:*)",
+      "Bash(go tool cover:*)",
+      "Bash(chmod:*)",
+      "Bash(command -v:*)",
+      "Bash(make:*)",
+      "Bash(kind get:*)",
+      "Bash(kind create cluster:*)",
+      "Bash(docker build:*)",
+      "Bash(kind load:*)",
+      "Bash(kubectl create:*)",
+      "Bash(kubectl apply:*)",
+      "Bash(kubectl:*)",
+      "Bash(kind delete cluster:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": []
+  }
+}

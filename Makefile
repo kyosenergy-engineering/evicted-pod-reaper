@@ -110,6 +110,33 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 	kubectl delete -f config/manager/
 	kubectl delete -f config/rbac/
 
+##@ Helm
+
+.PHONY: helm-lint
+helm-lint: ## Lint the Helm chart
+	helm lint charts/evicted-pod-reaper
+
+.PHONY: helm-template
+helm-template: ## Render Helm chart templates
+	helm template evicted-pod-reaper charts/evicted-pod-reaper
+
+.PHONY: helm-test
+helm-test: helm-lint ## Test Helm chart
+	helm template evicted-pod-reaper charts/evicted-pod-reaper --values charts/evicted-pod-reaper/ci/test-values.yaml
+	helm template evicted-pod-reaper charts/evicted-pod-reaper --values charts/evicted-pod-reaper/ci/cluster-wide-values.yaml
+
+.PHONY: helm-package
+helm-package: helm-test ## Package Helm chart
+	helm package charts/evicted-pod-reaper
+
+.PHONY: helm-install
+helm-install: ## Install Helm chart
+	helm upgrade --install evicted-pod-reaper charts/evicted-pod-reaper
+
+.PHONY: helm-uninstall
+helm-uninstall: ## Uninstall Helm chart
+	helm uninstall evicted-pod-reaper
+
 ##@ Build Dependencies
 
 ## Location to install dependencies to
