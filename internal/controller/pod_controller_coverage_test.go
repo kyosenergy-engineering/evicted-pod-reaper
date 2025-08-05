@@ -44,7 +44,7 @@ func TestPodReconciler_EdgeCases(t *testing.T) {
 			},
 		}
 		result, err := r.Reconcile(context.Background(), req)
-		
+
 		// Should return success with no error (pod not found is expected)
 		if err != nil {
 			t.Errorf("Expected no error for non-existent pod, got: %v", err)
@@ -86,16 +86,16 @@ func TestPodReconciler_EdgeCases(t *testing.T) {
 			},
 		}
 		result, err := r.Reconcile(context.Background(), req)
-		
+
 		if err != nil {
 			t.Errorf("Reconcile() error = %v", err)
 		}
-		
+
 		// Should delete immediately when no start time
 		if result != (ctrl.Result{}) {
 			t.Errorf("Expected empty result (pod deleted), got: %v", result)
 		}
-		
+
 		// Verify pod was deleted
 		err = fakeClient.Get(context.Background(), req.NamespacedName, &corev1.Pod{})
 		if err == nil {
@@ -106,13 +106,13 @@ func TestPodReconciler_EdgeCases(t *testing.T) {
 
 func TestPodReconciler_hasExceededTTL_NoStartTime(t *testing.T) {
 	r := &PodReconciler{TTLToDelete: 300}
-	
+
 	pod := &corev1.Pod{
 		Status: corev1.PodStatus{
 			StartTime: nil,
 		},
 	}
-	
+
 	// Should return true when no start time
 	if !r.hasExceededTTL(pod) {
 		t.Error("hasExceededTTL() should return true when pod has no start time")
@@ -121,13 +121,13 @@ func TestPodReconciler_hasExceededTTL_NoStartTime(t *testing.T) {
 
 func TestPodReconciler_calculateRequeueTime_NoStartTime(t *testing.T) {
 	r := &PodReconciler{TTLToDelete: 300}
-	
+
 	pod := &corev1.Pod{
 		Status: corev1.PodStatus{
 			StartTime: nil,
 		},
 	}
-	
+
 	// Should return 0 when no start time
 	if r.calculateRequeueTime(pod) != 0 {
 		t.Error("calculateRequeueTime() should return 0 when pod has no start time")
@@ -136,19 +136,18 @@ func TestPodReconciler_calculateRequeueTime_NoStartTime(t *testing.T) {
 
 func TestPodReconciler_calculateRequeueTime_AlreadyExceeded(t *testing.T) {
 	r := &PodReconciler{TTLToDelete: 300}
-	
+
 	pod := &corev1.Pod{
 		Status: corev1.PodStatus{
 			StartTime: &metav1.Time{Time: time.Now().Add(-10 * time.Minute)}, // Already exceeded
 		},
 	}
-	
+
 	// Should return 0 when already exceeded
 	if r.calculateRequeueTime(pod) != 0 {
 		t.Error("calculateRequeueTime() should return 0 when TTL already exceeded")
 	}
 }
-
 
 // Test client errors during reconciliation
 type errorClient struct {
@@ -195,7 +194,7 @@ func TestPodReconciler_ClientErrors(t *testing.T) {
 			},
 		}
 		_, err := r.Reconcile(context.Background(), req)
-		
+
 		if err == nil || err.Error() != "get failed" {
 			t.Errorf("Expected 'get failed' error, got: %v", err)
 		}
@@ -216,7 +215,7 @@ func TestPodReconciler_ClientErrors(t *testing.T) {
 			},
 		}
 		_, err := r.Reconcile(context.Background(), req)
-		
+
 		if err == nil || err.Error() != "delete failed" {
 			t.Errorf("Expected 'delete failed' error, got: %v", err)
 		}

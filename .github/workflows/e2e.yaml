@@ -1,0 +1,50 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+
+    - name: Set up Kind
+      uses: helm/kind-action@v1.8.0
+      with:
+        cluster_name: evicted-pod-reaper-test
+        config: test/e2e/kind-config.yaml
+
+    - name: Build controller image
+      run: |
+        docker build -t evicted-pod-reaper:e2e-test .
+        kind load docker-image evicted-pod-reaper:e2e-test --name evicted-pod-reaper-test
+
+    - name: Deploy controller
+      run: |
+        kubectl create namespace test-evicted-pods
+        kubectl apply -f test/e2e/manifests/rbac.yaml
+        kubectl apply -f test/e2e/manifests/deployment.yaml
+        
+        # Wait for deployment to be ready
+        kubectl -n test-evicted-pods wait --for=condition=available --timeout=60s deployment/evicted-pod-reaper
+
+    - name: Run Go e2e tests
+      run: |
+        go test -tags=e2e -v -timeout=10m ./test/e2e/...
+
+    - name: Show controller logs on failure
+      if: failure()
+      run: |
+        kubectl -n test-evicted-pods logs -l app=evicted-pod-reaper --tail=100
+        kubectl -n test-evicted-pods describe pods
+        kubectl get pods -A

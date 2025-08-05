@@ -197,11 +197,11 @@ func TestPodReconciler_NamespaceFiltering(t *testing.T) {
 // TestNamespaceConfiguration tests that the manager correctly configures namespace watching
 func TestNamespaceConfiguration(t *testing.T) {
 	tests := []struct {
-		name                   string
-		watchAllNamespaces     bool
-		watchNamespaces        []string
-		expectNamespaceFilter  bool
-		expectedWatchedCount   int
+		name                  string
+		watchAllNamespaces    bool
+		watchNamespaces       []string
+		expectNamespaceFilter bool
+		expectedWatchedCount  int
 	}{
 		{
 			name:                  "watch all namespaces",
@@ -235,11 +235,11 @@ func TestNamespaceConfiguration(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// This test documents the expected behavior
 			// In production, the manager's cache configuration handles namespace filtering
-			
+
 			if tt.watchAllNamespaces && tt.expectNamespaceFilter {
 				t.Error("When watching all namespaces, no filter should be applied")
 			}
-			
+
 			if !tt.watchAllNamespaces && len(tt.watchNamespaces) > 0 && !tt.expectNamespaceFilter {
 				t.Error("When watching specific namespaces, filter should be applied")
 			}

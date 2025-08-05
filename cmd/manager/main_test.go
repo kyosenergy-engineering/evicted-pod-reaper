@@ -40,11 +40,11 @@ func TestParseNamespaces(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := parseNamespaces(tt.input)
-			
+
 			if len(result) != len(tt.expected) {
 				t.Errorf("parseNamespaces() returned %d namespaces, expected %d", len(result), len(tt.expected))
 			}
-			
+
 			for i, ns := range result {
 				if i < len(tt.expected) && ns != tt.expected[i] {
 					t.Errorf("parseNamespaces()[%d] = %q, expected %q", i, ns, tt.expected[i])
@@ -96,7 +96,7 @@ func TestParseTTL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Capture log output to avoid test noise
 			result := parseTTL(tt.input)
-			
+
 			if result != tt.expected {
 				t.Errorf("parseTTL(%q) = %d, expected %d", tt.input, result, tt.expected)
 			}

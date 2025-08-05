@@ -37,6 +37,11 @@ help: ## Display this help.
 
 ##@ Development
 
+.PHONY: e2e-test
+e2e-test: docker-build ## Run e2e tests with Kind cluster
+	@echo "Running e2e tests..."
+	./test/e2e/e2e_test.sh
+
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./..."
