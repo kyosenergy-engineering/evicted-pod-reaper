@@ -1,0 +1,18 @@
+{{- if or .Values.logging .Values.extraVolumes }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "evicted-pod-reaper.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "evicted-pod-reaper.labels" . | nindent 4 }}
+  {{- with include "evicted-pod-reaper.annotations" . }}
+  annotations:
+    {{- . | nindent 4 }}
+  {{- end }}
+data:
+  config.yaml: |
+    logging:
+      level: {{ .Values.logging.level }}
+      format: {{ .Values.logging.format }}
+{{- end }}

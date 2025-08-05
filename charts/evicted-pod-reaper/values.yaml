@@ -1,0 +1,229 @@
+# Default values for evicted-pod-reaper.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- Number of replicas to deploy
+replicaCount: 1
+
+image:
+  # -- Container image repository
+  repository: public.ecr.aws/kyos/evicted-pod-reaper
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+  # -- Overrides the image tag whose default is the chart appVersion
+  tag: ""
+
+# -- Image pull secrets for private registries
+imagePullSecrets: []
+# -- Override the name of the chart
+nameOverride: ""
+# -- Override the full name of the chart
+fullnameOverride: ""
+
+# Controller configuration
+controller:
+  # -- Enable leader election for controller (recommended for HA)
+  leaderElection: false
+  # -- Health probe bind address
+  healthProbeBindAddress: ":8081"
+  # -- Metrics bind address
+  metricsBindAddress: ":8080"
+
+# Reaper configuration
+reaper:
+  # -- Whether to watch all namespaces. If false, uses watchNamespaces
+  watchAllNamespaces: false
+  # -- List of namespaces to watch (ignored if watchAllNamespaces is true)
+  watchNamespaces:
+    - default
+  # -- Time in seconds to wait before deleting an evicted pod
+  ttlToDelete: 300
+  # -- Additional environment variables
+  env: []
+  # - name: LOG_LEVEL
+  #   value: debug
+
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# -- Annotations to add to the pod
+podAnnotations: {}
+
+# -- Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  fsGroup: 65532
+
+# -- Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65532
+
+# Resource limits and requests
+resources:
+  limits:
+    # -- CPU limit
+    cpu: 500m
+    # -- Memory limit
+    memory: 128Mi
+  requests:
+    # -- CPU request
+    cpu: 10m
+    # -- Memory request
+    memory: 64Mi
+
+# Autoscaling configuration (not recommended for this controller)
+autoscaling:
+  # -- Enable autoscaling
+  enabled: false
+  # -- Minimum replicas
+  minReplicas: 1
+  # -- Maximum replicas
+  maxReplicas: 3
+  # -- Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 80
+  # -- Target memory utilization percentage
+  targetMemoryUtilizationPercentage: 80
+
+# -- Node selector for pod assignment
+nodeSelector: {}
+
+# -- Tolerations for pod assignment
+tolerations: []
+
+# -- Affinity rules for pod assignment
+affinity: {}
+
+# Pod disruption budget
+podDisruptionBudget:
+  # -- Enable PodDisruptionBudget
+  enabled: false
+  # -- Minimum available pods
+  minAvailable: 1
+  # -- Maximum unavailable pods
+  # maxUnavailable: 1
+
+# -- Priority class name
+priorityClassName: ""
+
+# -- Topology spread constraints
+topologySpreadConstraints: []
+
+# Probes configuration
+livenessProbe:
+  # -- Enable liveness probe
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: 8081
+  # -- Initial delay seconds
+  initialDelaySeconds: 15
+  # -- Period seconds
+  periodSeconds: 20
+  # -- Timeout seconds
+  timeoutSeconds: 1
+  # -- Success threshold
+  successThreshold: 1
+  # -- Failure threshold
+  failureThreshold: 3
+
+readinessProbe:
+  # -- Enable readiness probe
+  enabled: true
+  httpGet:
+    path: /readyz
+    port: 8081
+  # -- Initial delay seconds
+  initialDelaySeconds: 5
+  # -- Period seconds
+  periodSeconds: 10
+  # -- Timeout seconds
+  timeoutSeconds: 1
+  # -- Success threshold
+  successThreshold: 1
+  # -- Failure threshold
+  failureThreshold: 3
+
+# Metrics configuration
+metrics:
+  # -- Enable metrics
+  enabled: true
+  # Prometheus PodMonitor
+  podMonitor:
+    # -- Enable PodMonitor creation
+    enabled: false
+    # -- Namespace for PodMonitor (defaults to release namespace)
+    namespace: ""
+    # -- Additional labels for PodMonitor
+    labels: {}
+    # -- Scrape interval
+    interval: 30s
+    # -- Scrape timeout
+    scrapeTimeout: 10s
+    # -- Metric relabeling configs
+    metricRelabelings: []
+    # -- Relabeling configs
+    relabelings: []
+    # -- Honor labels
+    honorLabels: true
+
+# Network policy
+networkPolicy:
+  # -- Enable NetworkPolicy
+  enabled: false
+  # -- Ingress rules
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: prometheus
+      ports:
+      - protocol: TCP
+        port: 8080
+
+# RBAC configuration
+rbac:
+  # -- Create RBAC resources
+  create: true
+  # -- Additional rules to add to the Role/ClusterRole
+  additionalRules: []
+  # - apiGroups: [""]
+  #   resources: ["configmaps"]
+  #   verbs: ["get", "list", "watch"]
+
+# -- Extra volumes to mount
+extraVolumes: []
+# - name: custom-config
+#   configMap:
+#     name: custom-config
+
+# -- Extra volume mounts
+extraVolumeMounts: []
+# - name: custom-config
+#   mountPath: /etc/custom-config
+#   readOnly: true
+
+# -- Additional labels to add to all resources
+commonLabels: {}
+
+# -- Additional annotations to add to all resources
+commonAnnotations: {}
+
+# Logging configuration
+logging:
+  # -- Log level (debug, info, warn, error)
+  level: info
+  # -- Log format (json, text)
+  format: json

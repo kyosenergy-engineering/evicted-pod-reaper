@@ -1,0 +1,12 @@
+# Chart testing configuration
+remote: origin
+target-branch: main
+chart-dirs:
+  - charts
+chart-repos:
+  - prometheus-community=https://prometheus-community.github.io/helm-charts
+helm-extra-args: --timeout 600s
+validate-maintainers: true
+validate-chart-schema: true
+validate-yaml: true
+check-version-increment: true

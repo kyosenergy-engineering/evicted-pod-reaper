@@ -1,0 +1,53 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "evicted-pod-reaper.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "evicted-pod-reaper.labels" . | nindent 4 }}
+  {{- with include "evicted-pod-reaper.annotations" . }}
+  annotations:
+    {{- . | nindent 4 }}
+  {{- end }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "evicted-pod-reaper.selectorLabels" . | nindent 6 }}
+  policyTypes:
+  - Ingress
+  - Egress
+  {{- with .Values.networkPolicy.ingress }}
+  ingress:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  egress:
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    - podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow access to Kubernetes API
+  - to:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: kube-apiserver
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          app: kube-apiserver
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 6443
+{{- end }}

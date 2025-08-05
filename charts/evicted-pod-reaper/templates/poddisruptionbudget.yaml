@@ -1,0 +1,23 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "evicted-pod-reaper.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "evicted-pod-reaper.labels" . | nindent 4 }}
+  {{- with include "evicted-pod-reaper.annotations" . }}
+  annotations:
+    {{- . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "evicted-pod-reaper.selectorLabels" . | nindent 6 }}
+{{- end }}

@@ -1,0 +1,50 @@
+1. Get the application status by running these commands:
+
+{{- if .Values.metrics.enabled }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "evicted-pod-reaper.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  
+  echo "Evicted Pod Reaper is running!"
+  echo ""
+  echo "Configuration:"
+  echo "  Watch All Namespaces: {{ .Values.reaper.watchAllNamespaces }}"
+  {{- if not .Values.reaper.watchAllNamespaces }}
+  echo "  Watched Namespaces: {{ include "evicted-pod-reaper.watchNamespaces" . }}"
+  {{- end }}
+  echo "  TTL Before Delete: {{ .Values.reaper.ttlToDelete }} seconds"
+  echo ""
+  echo "To view controller logs:"
+  echo "  kubectl logs -n {{ .Release.Namespace }} $POD_NAME"
+  echo ""
+  echo "To check metrics:"
+  echo "  kubectl port-forward -n {{ .Release.Namespace }} $POD_NAME 8080:8080"
+  echo "  curl http://localhost:8080/metrics"
+{{- end }}
+
+{{- if .Values.metrics.podMonitor.enabled }}
+  echo ""
+  echo "Prometheus PodMonitor has been created. Metrics will be scraped by Prometheus automatically."
+{{- end }}
+
+2. To verify the controller is working:
+   
+   # Create a test evicted pod
+   kubectl run test-pod --image=busybox --restart=Never -- /bin/false
+   
+   # Wait for it to fail and manually set it to evicted state (for testing)
+   # Note: In production, pods are evicted by the kubelet due to resource pressure
+   
+   # Check if the evicted pod is deleted after {{ .Values.reaper.ttlToDelete }} seconds
+   kubectl get pods --field-selector=status.phase=Failed
+
+3. Important Notes:
+   
+   {{- if .Values.reaper.watchAllNamespaces }}
+   - The controller is configured to watch ALL namespaces in the cluster
+   - Make sure the service account has cluster-wide permissions
+   {{- else }}
+   - The controller is only watching specific namespaces: {{ include "evicted-pod-reaper.watchNamespaces" . }}
+   - To watch additional namespaces, update the reaper.watchNamespaces value
+   {{- end }}
+   
+   - Pods with the annotation 'evicted-pod-reaper.kyos.io/preserve=true' will NOT be deleted
+   - The controller respects the TTL of {{ .Values.reaper.ttlToDelete }} seconds before deletion
