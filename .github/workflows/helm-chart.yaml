@@ -3,12 +3,12 @@ name: Helm Chart CI
 on:
   push:
     branches:
-      - main
+    - master
     paths:
-      - 'charts/**'
+    - 'charts/**'
   pull_request:
     paths:
-      - 'charts/**'
+    - 'charts/**'
 
 jobs:
   lint-test:
