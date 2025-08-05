@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: evicted-pod-reaper
+  namespace: default
+  labels:
+    app: evicted-pod-reaper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: evicted-pod-reaper
+  template:
+    metadata:
+      labels:
+        app: evicted-pod-reaper
+    spec:
+      serviceAccountName: evicted-pod-reaper
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+      containers:
+      - name: manager
+        image: public.ecr.aws/kyos/evicted-pod-reaper:latest
+        imagePullPolicy: IfNotPresent
+        args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=:8080
+        - --leader-elect
+        env:
+        - name: REAPER_WATCH_ALL_NAMESPACES
+          value: "false"
+        - name: REAPER_WATCH_NAMESPACES
+          value: "default"
+        - name: REAPER_TTL_TO_DELETE
+          value: "300"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        ports:
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
