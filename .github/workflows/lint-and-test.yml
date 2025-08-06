@@ -27,10 +27,7 @@ jobs:
           version: latest
 
       - name: Run go test with coverage
-        run: go test -coverprofile=coverage.out ./...
+        run: go test -coverprofile=cover.out ./...
 
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage.out
+      - name: Go Beautiful HTML Coverage
+        uses: gha-common/go-beautiful-html-coverage@v1
