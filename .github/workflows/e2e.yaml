@@ -18,7 +18,7 @@ jobs:
         go-version: '1.24'
 
     - name: Set up Kind
-      uses: helm/kind-action@v1.8.0
+      uses: helm/kind-action@v1.12.0
       with:
         cluster_name: evicted-pod-reaper-test
         config: test/e2e/kind-config.yaml
