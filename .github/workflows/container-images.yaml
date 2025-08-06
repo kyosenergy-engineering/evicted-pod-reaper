@@ -19,7 +19,7 @@ jobs:
       with:
         role-to-assume: ${{ secrets.AWS_ECR_ROLE_ARN_FOR_OIDC }}
         role-session-name: docker-build-in-gh-actions
-        aws-region: eu-central-1
+        aws-region: us-east-1
 
     - name: Login to Amazon ECR Public
       uses: aws-actions/amazon-ecr-login@v2
