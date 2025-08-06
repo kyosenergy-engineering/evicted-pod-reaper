@@ -34,6 +34,11 @@ jobs:
         kubectl apply -f test/e2e/manifests/rbac.yaml
         kubectl apply -f test/e2e/manifests/deployment.yaml
         
+        kubectl -n test-evicted-pods get pods
+        kubectl -n test-evicted-pods describe deployment evicted-pod-reaper
+        kubectl -n test-evicted-pods describe pods -l app=evicted-pod-reaper
+        
+        
         # Wait for deployment to be ready
         kubectl -n test-evicted-pods wait --for=condition=available --timeout=60s deployment/evicted-pod-reaper
 
