@@ -1,11 +1,6 @@
 name: Helm Chart CI
 
 on:
-  push:
-    branches:
-    - master
-    paths:
-    - 'charts/**'
   pull_request:
     paths:
     - 'charts/**'
@@ -51,26 +46,3 @@ jobs:
     - name: Run chart-testing (install)
       if: steps.list-changed.outputs.changed == 'true'
       run: ct install --target-branch ${{ github.event.repository.default_branch }}
-
-  release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: lint-test
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Configure Git
-      run: |
-        git config user.name "$GITHUB_ACTOR"
-        git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-
-    - name: Install Helm
-      uses: azure/setup-helm@v4
-
-    - name: Run chart-releaser
-      uses: helm/chart-releaser-action@v1.7.0
-      env:
-        CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
