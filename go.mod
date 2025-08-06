@@ -2,7 +2,7 @@ module github.com/kyosenergy-engineering/evicted-pod-reaper
 
 go 1.24
 
-toolchain go1.24.5
+toolchain go1.24.6
 
 require (
 	github.com/prometheus/client_golang v1.19.0
