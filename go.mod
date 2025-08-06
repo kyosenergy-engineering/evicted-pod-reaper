@@ -71,5 +71,6 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-// Fix structured-merge-diff compatibility issue by redirecting v6 imports to v4
-replace sigs.k8s.io/structured-merge-diff/v6 => sigs.k8s.io/structured-merge-diff/v4 v4.6.0
+// Fix structured-merge-diff version conflict
+// Force v6 usage throughout to avoid type incompatibility  
+replace sigs.k8s.io/structured-merge-diff/v4 => sigs.k8s.io/structured-merge-diff/v6 v6.3.0
