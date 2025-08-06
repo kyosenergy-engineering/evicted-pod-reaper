@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyosenergy/evicted-pod-reaper/internal/metrics"
+	"github.com/kyosenergy-engineering/evicted-pod-reaper/internal/metrics"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

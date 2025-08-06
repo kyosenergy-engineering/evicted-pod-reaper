@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/kyosenergy/evicted-pod-reaper/internal/metrics"
+	"github.com/kyosenergy-engineering/evicted-pod-reaper/internal/metrics"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,7 +31,7 @@ type PodReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop
 func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	// Fetch the Pod instance
 	pod := &corev1.Pod{}
@@ -41,19 +41,19 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			// Object not found, return without error
 			return ctrl.Result{}, nil
 		}
-		log.Error(err, "unable to fetch Pod")
+		logger.Error(err, "unable to fetch Pod")
 		return ctrl.Result{}, err
 	}
 
 	// Check if pod is evicted
 	if !r.isPodEvicted(pod) {
-		log.V(1).Info("pod is not evicted, skipping", "phase", pod.Status.Phase, "reason", pod.Status.Reason)
+		logger.V(1).Info("pod is not evicted, skipping", "phase", pod.Status.Phase, "reason", pod.Status.Reason)
 		return ctrl.Result{}, nil
 	}
 
 	// Check preservation annotation
 	if r.shouldPreservePod(pod) {
-		log.Info("pod has preserve annotation, skipping deletion", "pod", req.NamespacedName)
+		logger.Info("pod has preserve annotation, skipping deletion", "pod", req.NamespacedName)
 		r.Metrics.IncSkipped(pod.Namespace)
 		return ctrl.Result{}, nil
 	}
@@ -61,19 +61,19 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	// Check TTL
 	if !r.hasExceededTTL(pod) {
 		requeueAfter := r.calculateRequeueTime(pod)
-		log.Info("pod has not exceeded TTL, requeuing", "pod", req.NamespacedName, "requeueAfter", requeueAfter)
+		logger.Info("pod has not exceeded TTL, requeuing", "pod", req.NamespacedName, "requeueAfter", requeueAfter)
 		return ctrl.Result{RequeueAfter: requeueAfter}, nil
 	}
 
 	// Delete the pod
-	log.Info("deleting evicted pod", "pod", req.NamespacedName)
+	logger.Info("deleting evicted pod", "pod", req.NamespacedName)
 	if err := r.Delete(ctx, pod); err != nil {
-		log.Error(err, "unable to delete pod", "pod", req.NamespacedName)
+		logger.Error(err, "unable to delete pod", "pod", req.NamespacedName)
 		return ctrl.Result{}, err
 	}
 
 	r.Metrics.IncDeleted(pod.Namespace)
-	log.Info("successfully deleted evicted pod", "pod", req.NamespacedName)
+	logger.Info("successfully deleted evicted pod", "pod", req.NamespacedName)
 
 	return ctrl.Result{}, nil
 }

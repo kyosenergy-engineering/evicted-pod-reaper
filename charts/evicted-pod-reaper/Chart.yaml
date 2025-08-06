@@ -4,9 +4,9 @@ description: A Kubernetes operator that automatically deletes evicted pods after
 type: application
 version: 0.1.0
 appVersion: "1.0.0"
-home: https://github.com/kyosenergy/evicted-pod-reaper
+home: https://github.com/kyosenergy-engineering/evicted-pod-reaper
 sources:
-  - https://github.com/kyosenergy/evicted-pod-reaper
+  - https://github.com/kyosenergy-engineering/evicted-pod-reaper
 keywords:
   - evicted
   - pods
@@ -17,15 +17,15 @@ keywords:
 maintainers:
   - name: Zois Pagoulatos
     email: pagoulatos@kyos.com
-icon: https://raw.githubusercontent.com/kyosenergy/evicted-pod-reaper/master/icon.png
+icon: https://raw.githubusercontent.com/kyosenergy-engineering/evicted-pod-reaper/master/icon.png
 annotations:
   artifacthub.io/category: "monitoring-logging"
   artifacthub.io/license: MIT
   artifacthub.io/links: |
     - name: Chart Source
-      url: https://github.com/kyosenergy/evicted-pod-reaper/tree/master/charts/evicted-pod-reaper
+      url: https://github.com/kyosenergy-engineering/evicted-pod-reaper/tree/master/charts/evicted-pod-reaper
     - name: Support
-      url: https://github.com/kyosenergy/evicted-pod-reaper/issues
+      url: https://github.com/kyosenergy-engineering/evicted-pod-reaper/issues
   artifacthub.io/changes: |
     - kind: added
       description: Initial chart release

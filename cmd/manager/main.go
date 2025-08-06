@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kyosenergy/evicted-pod-reaper/internal/controller"
-	"github.com/kyosenergy/evicted-pod-reaper/internal/metrics"
+	"github.com/kyosenergy-engineering/evicted-pod-reaper/internal/controller"
+	"github.com/kyosenergy-engineering/evicted-pod-reaper/internal/metrics"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
