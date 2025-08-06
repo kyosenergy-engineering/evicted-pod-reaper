@@ -21,7 +21,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -ldflags="-w -s" -o evi
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 ARG TARGETARCH
-FROM gcr.io/distroless/static:nonroot
+FROM cgr.dev/chainguard/static:latest
 
 WORKDIR /
 
