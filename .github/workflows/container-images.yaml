@@ -14,6 +14,9 @@ jobs:
       id-token: write # required for obtaining the OIDC JWT from GitHub
 
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4.2.2
+
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
