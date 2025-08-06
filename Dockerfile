@@ -16,12 +16,12 @@ COPY internal/ ./internal/
 
 # Build
 ARG TARGETARCH
-RUN GOOS=linux GOARCH=$TARGETARCH go build -o evicted-pod-reaper cmd/manager/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -ldflags="-w -s" -o evicted-pod-reaper cmd/manager/main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 ARG TARGETARCH
-FROM --platform=$TARGETARCH gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static:nonroot
 
 WORKDIR /
 
