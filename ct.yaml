@@ -4,7 +4,7 @@ target-branch: master
 chart-dirs:
   - charts
 chart-repos:
-  - evicted-pod-reaper=https://github.com/kyosenergy-engineering/evicted-pod-reaper
+  - evicted-pod-reaper=oci://ghrc.io/kyosenergy-engineering
 helm-extra-args: --timeout 600s
 validate-maintainers: true
 validate-chart-schema: true
