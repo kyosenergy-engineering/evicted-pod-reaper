@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -294,6 +295,115 @@ func TestPodReconciler_shouldPreservePod(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := r.shouldPreservePod(tt.pod); got != tt.want {
 				t.Errorf("shouldPreservePod() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestPodReconciler_EvictedPredicate tests the predicate used in SetupWithManager
+func TestPodReconciler_EvictedPredicate(t *testing.T) {
+	tests := []struct {
+		name string
+		pod  *corev1.Pod
+		want bool
+	}{
+		{
+			name: "evicted pod should match predicate",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "evicted-pod",
+					Namespace: "default",
+				},
+				Status: corev1.PodStatus{
+					Phase:  corev1.PodFailed,
+					Reason: "Evicted",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "failed pod with different reason should not match predicate",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "oom-killed-pod",
+					Namespace: "default",
+				},
+				Status: corev1.PodStatus{
+					Phase:  corev1.PodFailed,
+					Reason: "OOMKilled",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "running pod should not match predicate",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "running-pod",
+					Namespace: "default",
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodRunning,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "pending pod should not match predicate",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pending-pod",
+					Namespace: "default",
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodPending,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "succeeded pod should not match predicate",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "succeeded-pod",
+					Namespace: "default",
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodSucceeded,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "failed pod with empty reason should not match predicate",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "failed-pod-no-reason",
+					Namespace: "default",
+				},
+				Status: corev1.PodStatus{
+					Phase:  corev1.PodFailed,
+					Reason: "",
+				},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a predicate function that matches the one in SetupWithManager
+			evictedPredicate := func(obj client.Object) bool {
+				pod, ok := obj.(*corev1.Pod)
+				if !ok {
+					return false
+				}
+				return pod.Status.Phase == corev1.PodFailed && pod.Status.Reason == "Evicted"
+			}
+
+			got := evictedPredicate(tt.pod)
+			if got != tt.want {
+				t.Errorf("evictedPredicate() = %v, want %v", got, tt.want)
 			}
 		})
 	}

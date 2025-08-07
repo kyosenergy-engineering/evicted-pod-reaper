@@ -120,17 +120,17 @@ func (r *PodReconciler) calculateRequeueTime(pod *corev1.Pod) time.Duration {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// Only watch pods that are Failed
-	failedPredicate := predicate.NewPredicateFuncs(func(obj client.Object) bool {
+	// Only watch pods that are evicted (Failed phase with Evicted reason)
+	evictedPredicate := predicate.NewPredicateFuncs(func(obj client.Object) bool {
 		pod, ok := obj.(*corev1.Pod)
 		if !ok {
 			return false
 		}
-		return pod.Status.Phase == corev1.PodFailed
+		return pod.Status.Phase == corev1.PodFailed && pod.Status.Reason == "Evicted"
 	})
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Pod{}).
-		WithEventFilter(failedPredicate).
+		WithEventFilter(evictedPredicate).
 		Complete(r)
 }
