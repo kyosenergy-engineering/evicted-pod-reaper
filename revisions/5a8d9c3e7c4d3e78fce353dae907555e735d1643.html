@@ -1,0 +1,365 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+		<meta http-equiv="Pragma" content="no-cache" />
+		<meta http-equiv="Expires" content="0" />
+		<title>manager: Go Coverage Report</title>
+		<script src="../index.js?ad79d67a7b27030a910cdcdaaaf1e441"></script>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/kyosenergy-engineering/evicted-pod-reaper/cmd/manager/main.go (25.9%)</option>
+				
+				<option value="file1">github.com/kyosenergy-engineering/evicted-pod-reaper/internal/controller/pod_controller.go (87.2%)</option>
+				
+				<option value="file2">github.com/kyosenergy-engineering/evicted-pod-reaper/internal/metrics/metrics.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "flag"
+        "os"
+        "strconv"
+        "strings"
+
+        "github.com/kyosenergy-engineering/evicted-pod-reaper/internal/controller"
+        "github.com/kyosenergy-engineering/evicted-pod-reaper/internal/metrics"
+        "k8s.io/apimachinery/pkg/runtime"
+        utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+        clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+        _ "k8s.io/client-go/plugin/pkg/client/auth"
+        ctrl "sigs.k8s.io/controller-runtime"
+        "sigs.k8s.io/controller-runtime/pkg/cache"
+        "sigs.k8s.io/controller-runtime/pkg/healthz"
+        "sigs.k8s.io/controller-runtime/pkg/log/zap"
+        ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
+        metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+)
+
+var (
+        scheme   = runtime.NewScheme()
+        setupLog = ctrl.Log.WithName("setup")
+)
+
+func init() <span class="cov8" title="1">{
+        utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+}</span>
+
+func main() <span class="cov0" title="0">{
+        var metricsAddr string
+        var enableLeaderElection bool
+        var leaderElectionID string
+        var probeAddr string
+        flag.StringVar(&amp;metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+        flag.StringVar(&amp;probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+        flag.BoolVar(&amp;enableLeaderElection, "leader-elect", false,
+                "Enable leader election for controller manager. "+
+                        "Enabling this will ensure there is only one active controller manager.")
+        flag.StringVar(&amp;leaderElectionID, "leader-election-id", "evicted-pod-reaper.kyos.com", "Leader election ID to use.")
+        opts := zap.Options{
+                Development: true,
+        }
+        opts.BindFlags(flag.CommandLine)
+        flag.Parse()
+
+        ctrl.SetLogger(zap.New(zap.UseFlagOptions(&amp;opts)))
+
+        // Parse environment variables
+        watchAllNamespaces := os.Getenv("REAPER_WATCH_ALL_NAMESPACES") == "true"
+        watchNamespaces := parseNamespaces(os.Getenv("REAPER_WATCH_NAMESPACES"))
+        ttlToDelete := parseTTL(os.Getenv("REAPER_TTL_TO_DELETE"))
+
+        setupLog.Info("Starting evicted-pod-reaper",
+                "watchAllNamespaces", watchAllNamespaces,
+                "watchNamespaces", watchNamespaces,
+                "ttlToDelete", ttlToDelete,
+        )
+
+        // Configure manager options
+        mgrOpts := ctrl.Options{
+                Scheme:                 scheme,
+                Metrics:                metricsserver.Options{BindAddress: metricsAddr},
+                HealthProbeBindAddress: probeAddr,
+                LeaderElection:         enableLeaderElection,
+                LeaderElectionID:       leaderElectionID,
+        }
+
+        // Configure namespace watching
+        if !watchAllNamespaces &amp;&amp; len(watchNamespaces) &gt; 0 </span><span class="cov0" title="0">{
+                mgrOpts.Cache = cache.Options{
+                        DefaultNamespaces: make(map[string]cache.Config),
+                }
+                for _, ns := range watchNamespaces </span><span class="cov0" title="0">{
+                        mgrOpts.Cache.DefaultNamespaces[ns] = cache.Config{}
+                }</span>
+        }
+
+        <span class="cov0" title="0">mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), mgrOpts)
+        if err != nil </span><span class="cov0" title="0">{
+                setupLog.Error(err, "unable to start manager")
+                os.Exit(1)
+        }</span>
+
+        // Register metrics
+        <span class="cov0" title="0">podMetrics := metrics.NewPodMetrics()
+        podMetrics.Register(ctrlmetrics.Registry)
+
+        // Setup controller
+        if err = (&amp;controller.PodReconciler{
+                Client:      mgr.GetClient(),
+                Scheme:      mgr.GetScheme(),
+                Metrics:     podMetrics,
+                TTLToDelete: ttlToDelete,
+        }).SetupWithManager(mgr); err != nil </span><span class="cov0" title="0">{
+                setupLog.Error(err, "unable to create controller", "controller", "Pod")
+                os.Exit(1)
+        }</span>
+
+        <span class="cov0" title="0">if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil </span><span class="cov0" title="0">{
+                setupLog.Error(err, "unable to set up health check")
+                os.Exit(1)
+        }</span>
+        <span class="cov0" title="0">if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil </span><span class="cov0" title="0">{
+                setupLog.Error(err, "unable to set up ready check")
+                os.Exit(1)
+        }</span>
+
+        <span class="cov0" title="0">setupLog.Info("starting manager")
+        if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil </span><span class="cov0" title="0">{
+                setupLog.Error(err, "problem running manager")
+                os.Exit(1)
+        }</span>
+}
+
+func parseNamespaces(env string) []string <span class="cov8" title="1">{
+        if env == "" </span><span class="cov8" title="1">{
+                return []string{"default"}
+        }</span>
+        <span class="cov8" title="1">namespaces := strings.Split(env, ",")
+        for i := range namespaces </span><span class="cov8" title="1">{
+                namespaces[i] = strings.TrimSpace(namespaces[i])
+        }</span>
+        <span class="cov8" title="1">return namespaces</span>
+}
+
+func parseTTL(env string) int <span class="cov8" title="1">{
+        if env == "" </span><span class="cov8" title="1">{
+                return 300 // default 5 minutes
+        }</span>
+        <span class="cov8" title="1">ttl, err := strconv.Atoi(env)
+        if err != nil </span><span class="cov8" title="1">{
+                setupLog.Error(err, "invalid TTL value, using default", "value", env)
+                return 300
+        }</span>
+        <span class="cov8" title="1">return ttl</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package controller
+
+import (
+        "context"
+        "time"
+
+        "github.com/kyosenergy-engineering/evicted-pod-reaper/internal/metrics"
+        corev1 "k8s.io/api/core/v1"
+        "k8s.io/apimachinery/pkg/api/errors"
+        "k8s.io/apimachinery/pkg/runtime"
+        ctrl "sigs.k8s.io/controller-runtime"
+        "sigs.k8s.io/controller-runtime/pkg/client"
+        "sigs.k8s.io/controller-runtime/pkg/log"
+        "sigs.k8s.io/controller-runtime/pkg/predicate"
+)
+
+const (
+        preserveAnnotation = "pod-reaper.kyos.com/preserve"
+)
+
+// PodReconciler reconciles a Pod object
+type PodReconciler struct {
+        client.Client
+        Scheme      *runtime.Scheme
+        Metrics     *metrics.PodMetrics
+        TTLToDelete int // seconds to wait before deletion
+}
+
+//+kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch;delete
+//+kubebuilder:rbac:groups="",resources=pods/status,verbs=get
+
+// Reconcile is part of the main kubernetes reconciliation loop
+func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) <span class="cov8" title="1">{
+        logger := log.FromContext(ctx)
+
+        // Fetch the Pod instance
+        pod := &amp;corev1.Pod{}
+        err := r.Get(ctx, req.NamespacedName, pod)
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.IsNotFound(err) </span><span class="cov8" title="1">{
+                        // Object not found, return without error
+                        return ctrl.Result{}, nil
+                }</span>
+                <span class="cov8" title="1">logger.Error(err, "unable to fetch Pod")
+                return ctrl.Result{}, err</span>
+        }
+
+        // Check if pod is evicted
+        <span class="cov8" title="1">if !r.isPodEvicted(pod) </span><span class="cov8" title="1">{
+                logger.V(1).Info("pod is not evicted, skipping", "phase", pod.Status.Phase, "reason", pod.Status.Reason)
+                return ctrl.Result{}, nil
+        }</span>
+
+        // Check preservation annotation
+        <span class="cov8" title="1">if r.shouldPreservePod(pod) </span><span class="cov8" title="1">{
+                logger.Info("pod has preserve annotation, skipping deletion", "pod", req.NamespacedName)
+                r.Metrics.IncSkipped(pod.Namespace)
+                return ctrl.Result{}, nil
+        }</span>
+
+        // Check TTL
+        <span class="cov8" title="1">if !r.hasExceededTTL(pod) </span><span class="cov8" title="1">{
+                requeueAfter := r.calculateRequeueTime(pod)
+                logger.Info("pod has not exceeded TTL, requeuing", "pod", req.NamespacedName, "requeueAfter", requeueAfter)
+                return ctrl.Result{RequeueAfter: requeueAfter}, nil
+        }</span>
+
+        // Delete the pod
+        <span class="cov8" title="1">logger.Info("deleting evicted pod", "pod", req.NamespacedName)
+        if err := r.Delete(ctx, pod); err != nil </span><span class="cov8" title="1">{
+                logger.Error(err, "unable to delete pod", "pod", req.NamespacedName)
+                return ctrl.Result{}, err
+        }</span>
+
+        <span class="cov8" title="1">r.Metrics.IncDeleted(pod.Namespace)
+        logger.Info("successfully deleted evicted pod", "pod", req.NamespacedName)
+
+        return ctrl.Result{}, nil</span>
+}
+
+// isPodEvicted checks if a pod is in evicted state
+func (r *PodReconciler) isPodEvicted(pod *corev1.Pod) bool <span class="cov8" title="1">{
+        return pod.Status.Phase == corev1.PodFailed &amp;&amp; pod.Status.Reason == "Evicted"
+}</span>
+
+// shouldPreservePod checks if pod has preserve annotation set to "true"
+func (r *PodReconciler) shouldPreservePod(pod *corev1.Pod) bool <span class="cov8" title="1">{
+        if pod.Annotations == nil </span><span class="cov8" title="1">{
+                return false
+        }</span>
+        <span class="cov8" title="1">return pod.Annotations[preserveAnnotation] == "true"</span>
+}
+
+// hasExceededTTL checks if the pod has exceeded the TTL
+func (r *PodReconciler) hasExceededTTL(pod *corev1.Pod) bool <span class="cov8" title="1">{
+        if pod.Status.StartTime == nil </span><span class="cov8" title="1">{
+                // If no start time, consider it exceeded
+                return true
+        }</span>
+
+        <span class="cov8" title="1">podAge := time.Since(pod.Status.StartTime.Time)
+        return podAge &gt; time.Duration(r.TTLToDelete)*time.Second</span>
+}
+
+// calculateRequeueTime calculates when to requeue the pod for deletion
+func (r *PodReconciler) calculateRequeueTime(pod *corev1.Pod) time.Duration <span class="cov8" title="1">{
+        if pod.Status.StartTime == nil </span><span class="cov8" title="1">{
+                return 0
+        }</span>
+
+        <span class="cov8" title="1">podAge := time.Since(pod.Status.StartTime.Time)
+        ttlDuration := time.Duration(r.TTLToDelete) * time.Second
+
+        if podAge &gt;= ttlDuration </span><span class="cov8" title="1">{
+                return 0
+        }</span>
+
+        <span class="cov8" title="1">return ttlDuration - podAge</span>
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error <span class="cov0" title="0">{
+        // Only watch pods that are evicted (Failed phase with Evicted reason)
+        evictedPredicate := predicate.NewPredicateFuncs(func(obj client.Object) bool </span><span class="cov0" title="0">{
+                pod, ok := obj.(*corev1.Pod)
+                if !ok </span><span class="cov0" title="0">{
+                        return false
+                }</span>
+                <span class="cov0" title="0">return pod.Status.Phase == corev1.PodFailed &amp;&amp; pod.Status.Reason == "Evicted"</span>
+        })
+
+        <span class="cov0" title="0">return ctrl.NewControllerManagedBy(mgr).
+                For(&amp;corev1.Pod{}).
+                WithEventFilter(evictedPredicate).
+                Complete(r)</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package metrics
+
+import (
+        "github.com/prometheus/client_golang/prometheus"
+)
+
+// PodMetrics holds the prometheus metrics for pod operations
+type PodMetrics struct {
+        deletedTotal *prometheus.CounterVec
+        skippedTotal *prometheus.CounterVec
+}
+
+// NewPodMetrics creates a new PodMetrics instance
+func NewPodMetrics() *PodMetrics <span class="cov8" title="1">{
+        return &amp;PodMetrics{
+                deletedTotal: prometheus.NewCounterVec(
+                        prometheus.CounterOpts{
+                                Name: "evicted_pods_deleted_total",
+                                Help: "Total number of evicted pods deleted",
+                        },
+                        []string{"namespace"},
+                ),
+                skippedTotal: prometheus.NewCounterVec(
+                        prometheus.CounterOpts{
+                                Name: "evicted_pods_skipped_total",
+                                Help: "Total number of evicted pods skipped due to preserve annotation",
+                        },
+                        []string{"namespace"},
+                ),
+        }
+}</span>
+
+// Register registers the metrics with the prometheus registry
+func (m *PodMetrics) Register(registry prometheus.Registerer) <span class="cov8" title="1">{
+        registry.MustRegister(m.deletedTotal)
+        registry.MustRegister(m.skippedTotal)
+}</span>
+
+// IncDeleted increments the deleted counter for a namespace
+func (m *PodMetrics) IncDeleted(namespace string) <span class="cov8" title="1">{
+        m.deletedTotal.WithLabelValues(namespace).Inc()
+}</span>
+
+// IncSkipped increments the skipped counter for a namespace
+func (m *PodMetrics) IncSkipped(namespace string) <span class="cov8" title="1">{
+        m.skippedTotal.WithLabelValues(namespace).Inc()
+}</span>
+</pre>
+		
+		</div>
+	</body>
+</html>
