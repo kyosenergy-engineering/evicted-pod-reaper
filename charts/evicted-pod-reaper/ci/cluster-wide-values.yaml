@@ -17,6 +17,11 @@ autoscaling:
   maxReplicas: 5
   targetCPUUtilizationPercentage: 70
 
+# Test PDB
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
 # Test network policy
 networkPolicy:
   enabled: true

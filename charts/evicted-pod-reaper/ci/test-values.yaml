@@ -21,7 +21,6 @@ resources:
 
 # Test metrics with PodMonitor
 metrics:
-  enabled: true
   podMonitor:
     enabled: true
     interval: 15s
@@ -31,8 +30,3 @@ podSecurityContext:
   runAsNonRoot: true
   runAsUser: 1000
   fsGroup: 1000
-
-# Test PDB
-podDisruptionBudget:
-  enabled: true
-  minAvailable: 1

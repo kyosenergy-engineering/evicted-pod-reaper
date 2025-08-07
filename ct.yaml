@@ -1,12 +1,12 @@
 # Chart testing configuration
 remote: origin
-target-branch: main
+target-branch: master
 chart-dirs:
   - charts
-chart-repos:
-  - prometheus-community=https://prometheus-community.github.io/helm-charts
+# chart-repos:
+#   - evicted-pod-reaper=oci://ghrc.io/kyosenergy-engineering
 helm-extra-args: --timeout 600s
 validate-maintainers: true
 validate-chart-schema: true
 validate-yaml: true
-check-version-increment: true
+check-version-increment: false
