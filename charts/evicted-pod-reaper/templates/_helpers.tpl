@@ -75,17 +75,6 @@ Create the namespace list for watching
 {{- end }}
 
 {{/*
-Determine RBAC type (ClusterRole or Role)
-*/}}
-{{- define "evicted-pod-reaper.rbacKind" -}}
-{{- if .Values.reaper.watchAllNamespaces -}}
-ClusterRole
-{{- else -}}
-Role
-{{- end -}}
-{{- end }}
-
-{{/*
 Create environment variables for the controller
 */}}
 {{- define "evicted-pod-reaper.envVars" -}}
