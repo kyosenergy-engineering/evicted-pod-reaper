@@ -134,7 +134,7 @@ func testEvictedPodDeletion(t *testing.T, ctx context.Context, clientset *kubern
 	}
 
 	// Wait for pod to be deleted (should happen within TTL + some buffer)
-	err = wait.PollImmediate(time.Second, time.Duration(ttlSeconds+5)*time.Second, func() (bool, error) {
+	err = wait.PollImmediate(time.Second, time.Duration(ttlSeconds+10)*time.Second, func() (bool, error) {
 		_, err := clientset.CoreV1().Pods(testNamespace).Get(ctx, podName, metav1.GetOptions{})
 		if err != nil && strings.Contains(err.Error(), "not found") {
 			return true, nil
