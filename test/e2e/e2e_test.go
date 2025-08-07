@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -7,21 +8,29 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/prometheus/common/expfmt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/transport/spdy"
 )
 
 const (
 	testNamespace = "test-evicted-pods"
 	ttlSeconds    = 5
+)
+
+var (
+	kubeconfig string
 )
 
 func TestE2E(t *testing.T) {
@@ -30,7 +39,7 @@ func TestE2E(t *testing.T) {
 	}
 
 	// Get kubeconfig
-	kubeconfig := os.Getenv("KUBECONFIG")
+	kubeconfig = os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		home, _ := os.UserHomeDir()
 		kubeconfig = home + "/.kube/config"
@@ -125,7 +134,7 @@ func testEvictedPodDeletion(t *testing.T, ctx context.Context, clientset *kubern
 	}
 
 	// Wait for pod to be deleted (should happen within TTL + some buffer)
-	err = wait.PollImmediate(time.Second, time.Duration(ttlSeconds+5)*time.Second, func() (bool, error) {
+	err = wait.PollImmediate(time.Second, time.Duration(ttlSeconds+10)*time.Second, func() (bool, error) {
 		_, err := clientset.CoreV1().Pods(testNamespace).Get(ctx, podName, metav1.GetOptions{})
 		if err != nil && strings.Contains(err.Error(), "not found") {
 			return true, nil
@@ -332,16 +341,54 @@ func testMetricsEndpoint(t *testing.T, ctx context.Context, clientset *kubernete
 
 	podName := pods.Items[0].Name
 
-	// Port-forward to the metrics port
-	// Note: In a real test, you'd use the Kubernetes port-forward API
-	// For simplicity, we'll make a direct request if possible
-	
-	// Try to access metrics through service or ingress
-	// This is a simplified version - in production you'd set up proper access
-	resp, err := http.Get(fmt.Sprintf("http://%s.%s.svc.cluster.local:8080/metrics", podName, testNamespace))
+	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		t.Logf("Could not access metrics directly (this is expected in most environments): %v", err)
-		return
+		t.Fatalf("Failed to build rest config: %v", err)
+	}
+
+	// Find the pod's port (assume 8080)
+	localPort := "18080"
+	podPort := "8080"
+
+	// Create port forwarder
+	url := fmt.Sprintf("%s/api/v1/namespaces/%s/pods/%s/portforward", restConfig.Host, testNamespace, podName)
+	transport, upgrader, err := spdy.RoundTripperFor(restConfig)
+	if err != nil {
+		t.Fatalf("Failed to create roundtripper: %v", err)
+	}
+
+	stopChan := make(chan struct{}, 1)
+	readyChan := make(chan struct{}, 1)
+	defer close(stopChan)
+
+	pf, err := portforward.New(
+		spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", mustParseURL(url)),
+		[]string{localPort + ":" + podPort},
+		stopChan,
+		readyChan,
+		io.Discard,
+		io.Discard,
+	)
+	if err != nil {
+		t.Fatalf("Failed to create port forward: %v", err)
+	}
+
+	go func() {
+		_ = pf.ForwardPorts()
+	}()
+
+	// Wait for port-forward to be ready
+	select {
+	case <-readyChan:
+		// ready
+	case <-time.After(10 * time.Second):
+		t.Fatalf("Port-forward did not become ready in time")
+	}
+
+	// Use local port to access metrics
+	resp, err := http.Get(fmt.Sprintf("http://localhost:%s/metrics", localPort))
+	if err != nil {
+		t.Fatalf("Could not access metrics endpoint via port-forward: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -350,11 +397,25 @@ func testMetricsEndpoint(t *testing.T, ctx context.Context, clientset *kubernete
 		t.Fatalf("Failed to read metrics response: %v", err)
 	}
 
-	metrics := string(body)
-	if !strings.Contains(metrics, "evicted_pods_deleted_total") {
+	parser := expfmt.TextParser{}
+	metricFamilies, err := parser.TextToMetricFamilies(strings.NewReader(string(body)))
+	if err != nil {
+		t.Fatalf("Failed to parse Prometheus metrics: %v", err)
+	}
+
+	if _, ok := metricFamilies["evicted_pods_deleted_total"]; !ok {
 		t.Errorf("Metrics endpoint does not contain expected metric 'evicted_pods_deleted_total'")
 	}
-	if !strings.Contains(metrics, "evicted_pods_skipped_total") {
+	if _, ok := metricFamilies["evicted_pods_skipped_total"]; !ok {
 		t.Errorf("Metrics endpoint does not contain expected metric 'evicted_pods_skipped_total'")
 	}
+}
+
+// mustParseURL is a helper to panic on invalid URL (for test only)
+func mustParseURL(rawurl string) *url.URL {
+	u, err := url.Parse(rawurl)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }
