@@ -86,17 +86,6 @@ Role
 {{- end }}
 
 {{/*
-Determine RBAC binding type (ClusterRoleBinding or RoleBinding)
-*/}}
-{{- define "evicted-pod-reaper.rbacBindingKind" -}}
-{{- if .Values.reaper.watchAllNamespaces -}}
-ClusterRoleBinding
-{{- else -}}
-RoleBinding
-{{- end -}}
-{{- end }}
-
-{{/*
 Create environment variables for the controller
 */}}
 {{- define "evicted-pod-reaper.envVars" -}}
