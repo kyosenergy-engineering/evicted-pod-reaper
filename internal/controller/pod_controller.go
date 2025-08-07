@@ -118,16 +118,19 @@ func (r *PodReconciler) calculateRequeueTime(pod *corev1.Pod) time.Duration {
 	return ttlDuration - podAge
 }
 
+// isEvictedPodPredicate returns true if the object is an evicted pod
+func isEvictedPodPredicate(obj client.Object) bool {
+	pod, ok := obj.(*corev1.Pod)
+	if !ok {
+		return false
+	}
+	return pod.Status.Phase == corev1.PodFailed && pod.Status.Reason == "Evicted"
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// Only watch pods that are evicted (Failed phase with Evicted reason)
-	evictedPredicate := predicate.NewPredicateFuncs(func(obj client.Object) bool {
-		pod, ok := obj.(*corev1.Pod)
-		if !ok {
-			return false
-		}
-		return pod.Status.Phase == corev1.PodFailed && pod.Status.Reason == "Evicted"
-	})
+	evictedPredicate := predicate.NewPredicateFuncs(isEvictedPodPredicate)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Pod{}).

@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -392,18 +391,10 @@ func TestPodReconciler_EvictedPredicate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a predicate function that matches the one in SetupWithManager
-			evictedPredicate := func(obj client.Object) bool {
-				pod, ok := obj.(*corev1.Pod)
-				if !ok {
-					return false
-				}
-				return pod.Status.Phase == corev1.PodFailed && pod.Status.Reason == "Evicted"
-			}
-
-			got := evictedPredicate(tt.pod)
+			// Use the shared predicate function from the controller
+			got := isEvictedPodPredicate(tt.pod)
 			if got != tt.want {
-				t.Errorf("evictedPredicate() = %v, want %v", got, tt.want)
+				t.Errorf("isEvictedPodPredicate() = %v, want %v", got, tt.want)
 			}
 		})
 	}
