@@ -15,7 +15,7 @@ keywords:
   - kubernetes
   - controller
 maintainers:
-  - name: Zois Pagoulatos
+  - name: zoispag
     email: pagoulatos@kyos.com
 icon: https://raw.githubusercontent.com/kyosenergy-engineering/evicted-pod-reaper/master/icon.png
 annotations:
