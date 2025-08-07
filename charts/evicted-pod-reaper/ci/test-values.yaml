@@ -22,7 +22,7 @@ resources:
 # Test metrics with PodMonitor
 metrics:
   podMonitor:
-    enabled: false
+    enabled: true
     interval: 15s
 
 # Test security features
