@@ -298,3 +298,104 @@ func TestPodReconciler_shouldPreservePod(t *testing.T) {
 		})
 	}
 }
+
+// TestPodReconciler_EvictedPredicate tests the predicate used in SetupWithManager
+func TestPodReconciler_EvictedPredicate(t *testing.T) {
+	tests := []struct {
+		name string
+		pod  *corev1.Pod
+		want bool
+	}{
+		{
+			name: "evicted pod should match predicate",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "evicted-pod",
+					Namespace: "default",
+				},
+				Status: corev1.PodStatus{
+					Phase:  corev1.PodFailed,
+					Reason: "Evicted",
+				},
+			},
+			want: true,
+		},
+		{
+			name: "failed pod with different reason should not match predicate",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "oom-killed-pod",
+					Namespace: "default",
+				},
+				Status: corev1.PodStatus{
+					Phase:  corev1.PodFailed,
+					Reason: "OOMKilled",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "running pod should not match predicate",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "running-pod",
+					Namespace: "default",
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodRunning,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "pending pod should not match predicate",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pending-pod",
+					Namespace: "default",
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodPending,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "succeeded pod should not match predicate",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "succeeded-pod",
+					Namespace: "default",
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodSucceeded,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "failed pod with empty reason should not match predicate",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "failed-pod-no-reason",
+					Namespace: "default",
+				},
+				Status: corev1.PodStatus{
+					Phase:  corev1.PodFailed,
+					Reason: "",
+				},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Use the shared predicate function from the controller
+			got := isEvictedPodPredicate(tt.pod)
+			if got != tt.want {
+				t.Errorf("isEvictedPodPredicate() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
