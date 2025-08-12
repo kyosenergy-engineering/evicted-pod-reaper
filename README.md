@@ -56,6 +56,7 @@ verbs: ["get", "list", "watch", "delete"]
 ```
 
 Use a `ClusterRole` if watching all namespaces. Otherwise, apply a `Role` scoped to each watched namespace.
+By default, the Helm chart creates a `ClusterRole` and `ClusterRoleBinding`.
 
 ## 🐳 Dockerfile
 

@@ -1,11 +1,8 @@
 {{- if .Values.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1
-kind: {{ include "evicted-pod-reaper.rbacKind" . }}
+kind: ClusterRole
 metadata:
   name: {{ include "evicted-pod-reaper.fullname" . }}
-  {{- if not .Values.reaper.watchAllNamespaces }}
-  namespace: {{ .Release.Namespace }}
-  {{- end }}
   labels:
     {{- include "evicted-pod-reaper.labels" . | nindent 4 }}
   {{- with include "evicted-pod-reaper.annotations" . }}

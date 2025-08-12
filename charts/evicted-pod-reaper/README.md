@@ -7,8 +7,7 @@ A Kubernetes operator that automatically deletes evicted pods after a configurab
 ## TL;DR
 
 ```bash
-helm repo add kyos https://charts.kyos.io
-helm install evicted-pod-reaper kyos/evicted-pod-reaper
+helm install evicted-pod-reaper oci://ghcr.io/kyosenergy-engineering/evicted-pod-reaper --version 1.0.0
 ```
 
 ## Introduction
