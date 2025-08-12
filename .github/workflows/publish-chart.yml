@@ -30,8 +30,6 @@ jobs:
           helm package charts/evicted-pod-reaper --destination .cr-packages
 
       - name: Push Helm chart to GHCR
-        env:
-          HELM_EXPERIMENTAL_OCI: 1
         run: |
           CHART_PACKAGE=$(ls .cr-packages/evicted-pod-reaper-*.tgz)
           helm push "$CHART_PACKAGE" oci://ghcr.io/${{ github.repository_owner }}
