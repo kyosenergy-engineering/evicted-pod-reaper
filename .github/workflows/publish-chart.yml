@@ -1,0 +1,35 @@
+name: Publish Chart
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4.3.0
+        with:
+          version: v3.14.4
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.HELM_PACKAGES_PAT }}" | helm registry login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+      - name: Package Helm chart
+        run: |
+          helm package charts/evicted-pod-reaper --destination .cr-packages
+
+      - name: Push Helm chart to GHCR
+        run: |
+          CHART_PACKAGE=$(ls .cr-packages/evicted-pod-reaper-*.tgz)
+          helm push "$CHART_PACKAGE" oci://ghcr.io/${{ github.repository_owner }}
