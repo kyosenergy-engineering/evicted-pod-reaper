@@ -28,7 +28,7 @@ jobs:
         aws-region: us-east-1
 
     - name: Login to Amazon ECR Public
-      uses: aws-actions/amazon-ecr-login@v2
+      uses: aws-actions/amazon-ecr-login@v2.0.1
       with:
         registry-type: public
 
@@ -46,7 +46,7 @@ jobs:
         echo "TAG=$TAG" >> $GITHUB_ENV
 
     - name: Build, tag, and push docker image to Amazon ECR Public
-      uses: docker/bake-action@v6
+      uses: docker/bake-action@v6.8.0
       env:
         REGISTRY: public.ecr.aws
         TAG: ${{ env.TAG }}
