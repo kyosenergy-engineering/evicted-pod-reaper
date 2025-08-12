@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    tags:
+      - '*'
 
 jobs:
   build-ecr-images:
@@ -16,7 +18,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v5.0.0
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -33,11 +35,21 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3.11.1
 
+    - name: Set Docker tag
+      id: set_tag
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          TAG="${GITHUB_REF#refs/tags/}"
+        else
+          TAG="${GITHUB_SHA}"
+        fi
+        echo "TAG=$TAG" >> $GITHUB_ENV
+
     - name: Build, tag, and push docker image to Amazon ECR Public
       uses: docker/bake-action@v6
       env:
         REGISTRY: public.ecr.aws
-        TAG: ${{ github.sha }}
+        TAG: ${{ env.TAG }}
       with:
         source: .
         push: true
