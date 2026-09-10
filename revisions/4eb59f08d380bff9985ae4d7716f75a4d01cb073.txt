@@ -1,0 +1,16 @@
+github.com/kyosenergy-engineering/evicted-pod-reaper/cmd/manager/main.go:28:			init			100.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/cmd/manager/main.go:32:			main			0.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/cmd/manager/main.go:118:			parseNamespaces		100.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/cmd/manager/main.go:129:			parseTTL		100.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/internal/controller/pod_controller.go:33:	Reconcile		100.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/internal/controller/pod_controller.go:82:	isPodEvicted		100.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/internal/controller/pod_controller.go:87:	shouldPreservePod	100.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/internal/controller/pod_controller.go:95:	hasExceededTTL		100.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/internal/controller/pod_controller.go:106:	calculateRequeueTime	100.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/internal/controller/pod_controller.go:122:	isEvictedPodPredicate	75.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/internal/controller/pod_controller.go:131:	SetupWithManager	0.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/internal/metrics/metrics.go:14:		NewPodMetrics		100.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/internal/metrics/metrics.go:34:		Register		100.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/internal/metrics/metrics.go:40:		IncDeleted		100.0%
+github.com/kyosenergy-engineering/evicted-pod-reaper/internal/metrics/metrics.go:45:		IncSkipped		100.0%
+total:												(statements)		59.4%
